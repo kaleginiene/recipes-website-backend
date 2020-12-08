@@ -80,7 +80,23 @@ router.post("/recipes", middleware.isLoggedIn, (req, res) => {
       if (err) {
         res.status(400).json(err);
       } else {
-        res.status(201).json({ msg: "You successfully added a recipe" });
+        res.status(201).json({ msg: "You successfully added a recipe." });
+        console.log(result);
+      }
+    }
+  );
+});
+
+router.post("/ingredients", (req, res) => {
+  con.query(
+    `INSERT INTO ingredients (product, quantity, weight_type, recipe_id) VALUES ('${req.body.product}', '${req.body.quantity}', '${req.body.weightType}', '${req.body.recipeID}')`,
+    (err, result) => {
+      if (err) {
+        res.status(400).json(err);
+      } else {
+        res
+          .status(201)
+          .json({ msg: "You successfully added ingredients for your recipe!" });
         console.log(result);
       }
     }
