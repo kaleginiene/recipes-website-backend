@@ -48,15 +48,13 @@ router.post("/login", (req, res) => {
     } else {
       bcrypt.compare(req.body.password, result[0].password, (bErr, bResult) => {
         if (bErr) {
-          return res
-            .status(400)
-            .json({ msg: "Username or password incorrect" });
+          return res.status(400).json({ msg: "Email or password incorrect" });
         }
         if (bResult) {
           const token = jwt.sign(
             {
               userID: result[0].id,
-              username: result[0].username,
+              email: result[0].email,
             },
             "SECRETKEY",
             { expiresIn: "7d" }
@@ -71,8 +69,36 @@ router.post("/login", (req, res) => {
   });
 });
 
+//-------------main content-------------//
+
+router.post("/recipes", middleware.isLoggedIn, (req, res) => {
+  console.log(req.userData);
+
+  con.query(
+    `INSERT INTO recipes (title, image, duration, description, type, user_added) VALUES ('${req.body.title}', '${req.body.image}', '${req.body.duration}', '${req.body.description}', '${req.body.type}','${req.userData.userID}')`,
+    (err, result) => {
+      if (err) {
+        res.status(400).json(err);
+      } else {
+        res.status(201).json({ msg: "You successfully added a recipe" });
+        console.log(result);
+      }
+    }
+  );
+});
+
 router.get("/users", (req, res) => {
   con.query(`SELECT * FROM users`, (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.json(result);
+    }
+  });
+});
+
+router.get("/recipes", (req, res) => {
+  con.query(`SELECT * FROM recipes`, (err, result) => {
     if (err) {
       console.log(err);
     } else {
