@@ -123,4 +123,14 @@ router.get("/recipes", (req, res) => {
   });
 });
 
+router.get("/ingredients", (req, res) => {
+  con.query(`SELECT * FROM ingredients`, (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.json(result);
+    }
+  });
+});
+
 module.exports = router;
