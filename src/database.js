@@ -7,21 +7,12 @@ const con = mysql.createConnection({
   password: process.env.MYSQL_DB_PASS,
   database: process.env.MYSQL_DB_NAME,
   port: process.env.MYSQL_DB_PORT,
+  sslmode: process.env.MYSQL_DB_SSLMODE,
 });
 
 con.connect((err) => {
   if (err) {
     console.log(err);
-    if (err.code === "ECONNRESET") {
-      setTimeout(
-        con.connect((err) => {
-          if (err) {
-            console.log(err);
-          }
-        }),
-        2000
-      );
-    }
   } else {
     console.log("Successfully connected to database");
   }
