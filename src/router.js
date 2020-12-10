@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
+const mysql = require("mysql");
 const con = require("./database");
 const middleware = require("./users");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-require("dotenv");
+require("dotenv").config();
 
 //-------------AUTHENTIFICATION-------------//
 
@@ -40,33 +41,56 @@ router.post("/register", middleware.validateRegistration, (req, res) => {
   });
 });
 
-router.post("/login", (req, res) => {
+router.post("/login", middleware.validateRegistration, (req, res) => {
   const email = req.body.email;
-  con.query(`SELECT * FROM users WHERE email = '${email}'`, (err, result) => {
-    if (err) {
-      res.status(400).json(err);
-    } else {
-      bcrypt.compare(req.body.password, result[0].password, (bErr, bResult) => {
-        if (bErr) {
-          return res.status(400).json({ msg: "Email or password incorrect" });
-        }
-        if (bResult) {
-          const token = jwt.sign(
-            {
-              userID: result[0].id,
-              email: result[0].email,
-            },
-            "SECRETKEY",
-            { expiresIn: "7d" }
-          );
-          con.query(
-            `UPDATE users SET last_login_date = now() WHERE id = '${result[0].id}'`
-          );
-          res.status(200).json({ msg: "Logged in", token });
-        }
-      });
+  con.query(
+    `SELECT * FROM users WHERE email = ${mysql.escape(email)}`,
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        return res
+          .status(400)
+          .json({ msg: "Internal server error gathering user details" });
+      } else if (result.length !== 1) {
+        return res.status(400).json({
+          msg: "The provided details are incorrect or the user does not exist",
+        });
+      } else {
+        bcrypt.compare(
+          req.body.password,
+          result[0].password,
+          (bErr, bResult) => {
+            if (bErr || !bResult) {
+              return res.status(400).json({
+                msg:
+                  "The provided details are incorrect or the user does not exist",
+              });
+            } else if (bResult) {
+              const token = jwt.sign(
+                {
+                  userId: result[0].id,
+                  email: result[0].email,
+                },
+                process.env.SECRET_KEY,
+                {
+                  expiresIn: "7d",
+                }
+              );
+
+              return res.status(200).json({
+                msg: "Logged In",
+                token,
+                userData: {
+                  userId: result[0].id,
+                  email: result[0].email,
+                },
+              });
+            }
+          }
+        );
+      }
     }
-  });
+  );
 });
 
 //-------------main content-------------//
@@ -75,28 +99,12 @@ router.post("/recipes", middleware.isLoggedIn, (req, res) => {
   console.log(req.userData);
 
   con.query(
-    `INSERT INTO recipes (title, image, duration, description, type, user_added) VALUES ('${req.body.title}', '${req.body.image}', '${req.body.duration}', '${req.body.description}', '${req.body.type}','${req.userData.userID}')`,
+    `INSERT INTO recipes (title, image, duration, description, type, user_added, difficulty, ingredients) VALUES ('${req.body.title}', '${req.body.image}', '${req.body.duration}', '${req.body.description}', '${req.body.type}','${req.userData.userID}', '${req.body.difficulty}', '${req.body.ingredients}')`,
     (err, result) => {
       if (err) {
         res.status(400).json(err);
       } else {
         res.status(201).json({ msg: "You successfully added a recipe." });
-        console.log(result);
-      }
-    }
-  );
-});
-
-router.post("/ingredients", (req, res) => {
-  con.query(
-    `INSERT INTO ingredients (product, quantity, weight_type, recipe_id) VALUES ('${req.body.product}', '${req.body.quantity}', '${req.body.weightType}', '${req.body.recipeID}')`,
-    (err, result) => {
-      if (err) {
-        res.status(400).json(err);
-      } else {
-        res
-          .status(201)
-          .json({ msg: "You successfully added ingredients for your recipe!" });
         console.log(result);
       }
     }
@@ -115,16 +123,6 @@ router.get("/users", (req, res) => {
 
 router.get("/recipes", (req, res) => {
   con.query(`SELECT * FROM recipes`, (err, result) => {
-    if (err) {
-      console.log(err);
-    } else {
-      res.json(result);
-    }
-  });
-});
-
-router.get("/ingredients", (req, res) => {
-  con.query(`SELECT * FROM ingredients`, (err, result) => {
     if (err) {
       console.log(err);
     } else {
