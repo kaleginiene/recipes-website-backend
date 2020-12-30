@@ -136,7 +136,7 @@ router.post("/my-recipes", middleware.isLoggedIn, (req, res) => {
     console.log(req.userData);
 
     db.query(
-      `INSERT INTO myrecipes (user_id, recipe_id) VALUES ('${req.userData.userId}', '${req.body.recipeID}')`,
+      `INSERT INTO my_recipes (user_id, recipe_id) VALUES ('${req.userData.userId}', '${req.body.recipeID}')`,
       (err, result) => {
         if (err) {
           res.status(400).json(err);
@@ -193,7 +193,7 @@ router.get("/recipes/:id", (req, res) => {
 router.get("/my-recipes", middleware.isLoggedIn, (req, res) => {
   database((db) => {
     db.query(
-      `SELECT DISTINCT recipes.id, recipes.title, recipes.image, recipes.duration, recipes.type, recipes.user_added, recipes.difficulty FROM recipes INNER JOIN myrecipes ON myrecipes.recipe_id = recipes.id WHERE myrecipes.user_id = '${req.userData.userId}'`,
+      `SELECT DISTINCT recipes.id, recipes.title, recipes.image, recipes.duration, recipes.type, recipes.user_added, recipes.difficulty FROM recipes INNER JOIN my_recipes ON my_recipes.recipe_id = recipes.id WHERE my_recipes.user_id = '${req.userData.userId}'`,
       (err, result) => {
         if (err) {
           console.log(err);
@@ -208,7 +208,7 @@ router.get("/my-recipes", middleware.isLoggedIn, (req, res) => {
 router.post("/remove-my-recipe", middleware.isLoggedIn, (req, res) => {
   database((db) => {
     db.query(
-      `DELETE from myrecipes WHERE (user_id = '${req.userData.userId}' AND recipe_id = '${req.body.recipeID}')`,
+      `DELETE from my_recipes WHERE (user_id = '${req.userData.userId}' AND recipe_id = '${req.body.recipeID}')`,
       (err, result) => {
         if (err) {
           res.status(400).json(err);
