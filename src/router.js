@@ -193,7 +193,7 @@ router.get("/recipes/:id", (req, res) => {
 router.get("/my-recipes", middleware.isLoggedIn, (req, res) => {
   database((db) => {
     db.query(
-      `SELECT DISTINCT recipes.id, recipes.title, recipes.image, recipes.duration, recipes.type, recipes.difficulty, recipes.user_added FROM recipes INNER JOIN myrecipes ON myrecipes.recipe_id = recipes.id WHERE myrecipes.user_id = '${req.userData.userId}'`,
+      `SELECT DISTINCT recipes.id, recipes.title, recipes.image, recipes.duration, recipes.type, recipes.user_added, recipes.difficulty FROM recipes INNER JOIN myrecipes ON myrecipes.recipe_id = recipes.id WHERE myrecipes.user_id = '${req.userData.userId}'`,
       (err, result) => {
         if (err) {
           console.log(err);
